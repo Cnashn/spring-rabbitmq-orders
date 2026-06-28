@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: orders
+      POSTGRES_USER: orders
+      POSTGRES_PASSWORD: orders
+    ports:
+      - "5432:5432"
+
+  rabbitmq:
+    image: rabbitmq:3.13-management
+    ports:
+      - "5672:5672"
+      - "15672:15672"
