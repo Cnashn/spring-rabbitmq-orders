@@ -3,7 +3,6 @@ package com.example.orders;
 import com.example.orders.dto.CreateOrderRequest;
 import com.example.orders.dto.OrderResponse;
 import com.example.orders.entity.OrderStatus;
-import com.example.orders.repository.OrderRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -11,12 +10,7 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.containers.RabbitMQContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
+import org.springframework.test.context.TestPropertySource;
 
 import java.math.BigDecimal;
 import java.util.UUID;
@@ -26,29 +20,17 @@ import static org.awaitility.Awaitility.await;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
+@TestPropertySource(properties = {
+        "spring.datasource.url=jdbc:postgresql://localhost:5433/orders",
+        "spring.datasource.username=orders",
+        "spring.datasource.password=orders",
+        "spring.rabbitmq.host=localhost",
+        "spring.rabbitmq.port=5672"
+})
 class OrderIntegrationTest {
-
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16");
-
-    @Container
-    static RabbitMQContainer rabbit = new RabbitMQContainer("rabbitmq:3.13-management");
-
-    @DynamicPropertySource
-    static void overrideProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.rabbitmq.host", rabbit::getHost);
-        registry.add("spring.rabbitmq.port", rabbit::getAmqpPort);
-        registry.add("spring.rabbitmq.username", rabbit::getAdminUsername);
-        registry.add("spring.rabbitmq.password", rabbit::getAdminPassword);
-    }
 
     @LocalServerPort int port;
     @Autowired TestRestTemplate restTemplate;
-    @Autowired OrderRepository orderRepository;
 
     @Test
     void createOrder_fullRoundTrip_orderIsProcessed() {
